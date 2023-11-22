@@ -160,5 +160,7 @@ int main(int argc, char *argv[]) {
         pthread_join(thread[i], NULL);
     }
 
+    pthread_barrier_destroy(&barrier);
+    
     return 0;
 }
