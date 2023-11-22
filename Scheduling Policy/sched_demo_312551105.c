@@ -5,10 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #define SCHE_FIFO 1
 #define SCHE_NORMAL 0
+#define MILLI_3 1000
+#define MICRO_6 1000000
 
 typedef struct {
     pthread_t thread_id;
@@ -24,18 +27,21 @@ void *thread_func(void *arg) {
     pthread_barrier_wait(&barrier);
 
     thread_info_t *thread_info = (thread_info_t *)arg;
+    int busy_time_msec = thread_info->time_wait * MILLI_3;
 
     /* 2. Do the task */
     for (int i = 0; i < 3; i++) {
         printf("Thread %d is running\n", (int)thread_info->thread_id);
 
         /* Busy for <time_wait> seconds */
-        clock_t start_time, end_time;
-        start_time = clock();
+        struct timespec start_time, end_time;
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &start_time);
+        int start_time_msec = start_time.tv_sec * MILLI_3 + start_time.tv_nsec / MICRO_6;
+
         while (1) {
-            end_time = clock();
-            if (((double)(end_time - start_time) / CLOCKS_PER_SEC) >
-                thread_info->time_wait) {
+            clock_gettime(CLOCK_THREAD_CPUTIME_ID, &end_time);
+            int end_time_msec = end_time.tv_sec * MILLI_3 + end_time.tv_nsec / MICRO_6;
+            if ((end_time_msec - start_time_msec) >= busy_time_msec) {
                 break;
             }
         }
@@ -161,6 +167,6 @@ int main(int argc, char *argv[]) {
     }
 
     pthread_barrier_destroy(&barrier);
-    
+
     return 0;
 }
