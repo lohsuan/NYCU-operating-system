@@ -11,7 +11,7 @@
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/printk.h>
-#include <linux/sched.h>
+#include <linux/sched.h> /* for_each_process */
 #include <linux/sched/signal.h>
 #include <linux/smp.h>
 #include <linux/types.h>
@@ -80,7 +80,7 @@ static int kfetch_init(void) {
 
     pr_info("Device created on /dev/%s\n", DEVICE_NAME);
 
-    // when the module is loaded, 
+    // when the module is loaded,
     // the first invocation without any options will display all the information.
     kfetch_mask = ((1 << KFETCH_NUM_INFO) - 1);
 
@@ -200,9 +200,8 @@ static ssize_t kfetch_read(struct file *filp,   /* see include/linux/fs.h   */
     // num_procs
     struct task_struct *task_list;
     for_each_process(task_list) {
-        num_procs += task_list->signal->nr_threads;
+        num_procs++;
     }
-
 
     // printk("num_procs: %d\n", num_procs);
 
@@ -213,56 +212,51 @@ static ssize_t kfetch_read(struct file *filp,   /* see include/linux/fs.h   */
 
     /* ///////////////////  fetching the information end ////////////////  */
 
-    char* info_list[8];
+    char info_list[8][64];
     bool contain_info[8] = {true, true, false, false, false, false, false, false};
 
-    info_list[0] = machine_hostname;
-    info_list[1] = split_line;
+    strcpy(info_list[0], machine_hostname);
+    strcpy(info_list[1], split_line);
 
     // printk("info_list[0]: %s\n", info_list[0]);
     // printk("info_list[1]: %s\n", info_list[1]);
 
-    char buf2[40] = {0};
-    char buf3[60] = {0};
-    char buf4[20] = {0};
-    char buf5[60] = {0};
-    char buf6[50] = {0};
-    char buf7[50] = {0};
+    char buf[64] = {0};
 
     if (kfetch_mask & KFETCH_RELEASE) {
         contain_info[2] = true;
-        sprintf(buf2, "Kernal: %s", kernel_release);
-        info_list[2] = buf2;
+        sprintf(buf, "Kernal: %s", kernel_release);
+        strcpy(info_list[2], buf);
         // printk("info_list[2]: %s\n", info_list[2]);
     }
     if (kfetch_mask & KFETCH_CPU_MODEL) {
         contain_info[3] = true;
-        sprintf(buf3, "CPU:    %s", cpu_model_name);
-        info_list[3] = buf3;
+        sprintf(buf, "CPU:    %s", cpu_model_name);
+        strcpy(info_list[3], buf);
         // printk("info_list[3]: %s\n", info_list[3]);
     }
     if (kfetch_mask & KFETCH_NUM_CPUS) {
         contain_info[4] = true;
-        sprintf(buf4, "CPUs:   %d / %d", online_cpus, total_cpus);
-        info_list[4] = buf4;
+        sprintf(buf, "CPUs:   %d / %d", online_cpus, total_cpus);
+        strcpy(info_list[4], buf);
         // printk("info_list[4]: %s\n", info_list[4]);
     }
     if (kfetch_mask & KFETCH_MEM) {
         contain_info[5] = true;
-        sprintf(buf5, "Mem:    %ld / %ld MB", free_memory, total_memory);
-        info_list[5] = buf5;
+        sprintf(buf, "Mem:    %ld / %ld MB", free_memory, total_memory);
+        strcpy(info_list[5], buf);
         // printk("info_list[5]: %s\n", info_list[5]);
     }
     if (kfetch_mask & KFETCH_NUM_PROCS) {
         contain_info[6] = true;
-        sprintf(buf6, "Procs:  %d", num_procs);
-        info_list[6] = buf6;
+        sprintf(buf, "Procs:  %d", num_procs);
+        strcpy(info_list[6], buf);
         // printk("info_list[6]: %s\n", info_list[6]);
     }
     if (kfetch_mask & KFETCH_UPTIME) {
         contain_info[7] = true;
-        sprintf(buf7, "Uptime: %ld mins", uptime);
-        info_list[7] = buf7;
+        sprintf(buf, "Uptime: %ld mins", uptime);
+        strcpy(info_list[7], buf);
         // printk("info_list[7]: %s\n", info_list[7]);
     }
 
@@ -273,11 +267,9 @@ static ssize_t kfetch_read(struct file *filp,   /* see include/linux/fs.h   */
         strcat(kfetch_buf, logo[i]);
 
         while (j < 8) {
-            printk("j= %d\n", j);
-
+            // printk("j= %d\n", j);
             if (contain_info[j]) {
-                printk("info= %s\n", info_list[j]);
-
+                // printk("info= %s\n", info_list[j]);
                 strcat(kfetch_buf, info_list[j]);
                 j++;
                 break;
@@ -293,8 +285,11 @@ static ssize_t kfetch_read(struct file *filp,   /* see include/linux/fs.h   */
         return 0;
     }
 
-    /* cleaning up */
     return sizeof(kfetch_buf);
+    
+    /* cleaning up */
+
+    // no heap memory allocated, no need to free    
 }
 
 /* Called when a process writes to dev file.
