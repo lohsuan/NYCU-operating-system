@@ -175,9 +175,6 @@ static ssize_t kfetch_read(struct file *filp,   /* see include/linux/fs.h   */
     }
     split_line[sl] = '\0';
 
-    // printk("machine_hostname: %s\n", machine_hostname);
-    // printk("machine_hostname: %s\n", split_line);
-
     // cpu_model_name, online_cpus, total_cpus
     struct cpuinfo_x86 *c = &cpu_data(0);
     cpu_model_name = c->x86_model_id;
@@ -194,16 +191,11 @@ static ssize_t kfetch_read(struct file *filp,   /* see include/linux/fs.h   */
     free_memory = si.freeram * PAGE_SIZE / 1024 / 1024; // in MB
     total_memory = si.totalram * PAGE_SIZE / 1024 / 1024;
 
-    // printk("free_memory: %ld\n", free_memory);
-    // printk("total_memory: %ld\n", total_memory);
-
     // num_procs
     struct task_struct *task_list;
     for_each_process(task_list) {
         num_procs++;
     }
-
-    // printk("num_procs: %d\n", num_procs);
 
     // uptime
     s64 uptime_temp;
@@ -217,9 +209,6 @@ static ssize_t kfetch_read(struct file *filp,   /* see include/linux/fs.h   */
 
     strcpy(info_list[0], machine_hostname);
     strcpy(info_list[1], split_line);
-
-    // printk("info_list[0]: %s\n", info_list[0]);
-    // printk("info_list[1]: %s\n", info_list[1]);
 
     char buf[64] = {0};
 
@@ -267,9 +256,7 @@ static ssize_t kfetch_read(struct file *filp,   /* see include/linux/fs.h   */
         strcat(kfetch_buf, logo[i]);
 
         while (j < 8) {
-            // printk("j= %d\n", j);
             if (contain_info[j]) {
-                // printk("info= %s\n", info_list[j]);
                 strcat(kfetch_buf, info_list[j]);
                 j++;
                 break;
