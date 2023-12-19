@@ -128,15 +128,22 @@ static int kfetch_release(struct inode *inode, struct file *file) {
     return SUCCESS;
 }
 
+/*   Format for printing text in color is \033[1;<color code>m,
+ *   - \033 -> escape character
+ *   - [1;<color code>m -> code for setting the text color.
+ *   
+ *   - \033[1;33m -> sets the text color to yellow
+ *   - \033[1;0m -> resets the text color to default
+ */
 char *logo[8] = {
-    "                    ",
-    "         .-.        ",
-    "        (.. |       ",
-    "        <>  |       ",
-    "       / --- \\      ",
-    "      ( |   | |     ",
-    "    |\\\\_)___/\\)/\\   ",
-    "   <__)------(__/   ",
+    "                      ",
+    "         .-.          ",
+    "        (.. |         ",
+    "       \033[1;33m <> \033[1;0m |         ",
+    "       / --- \\        ",
+    "      ( |   | |       ",
+    "    \033[1;33m|\\\033[1;0m\\_)___/\\)\033[1;33m/\\ \033[1;0m    ",
+    "   \033[1;33m<__)\033[1;0m------\033[1;33m(__/\033[1;0m     ",
 };
 
 /* Called when a process, which already opened the dev file, attempts to read from it.
@@ -214,37 +221,37 @@ static ssize_t kfetch_read(struct file *filp,   /* see include/linux/fs.h   */
 
     if (kfetch_mask & KFETCH_RELEASE) {
         contain_info[2] = true;
-        sprintf(buf, "Kernal: %s", kernel_release);
+        sprintf(buf, "\033[1;33mKernal:\033[1;0m %s", kernel_release);
         strcpy(info_list[2], buf);
         // printk("info_list[2]: %s\n", info_list[2]);
     }
     if (kfetch_mask & KFETCH_CPU_MODEL) {
         contain_info[3] = true;
-        sprintf(buf, "CPU:    %s", cpu_model_name);
+        sprintf(buf, "\033[1;33mCPU:\033[1;0m    %s", cpu_model_name);
         strcpy(info_list[3], buf);
         // printk("info_list[3]: %s\n", info_list[3]);
     }
     if (kfetch_mask & KFETCH_NUM_CPUS) {
         contain_info[4] = true;
-        sprintf(buf, "CPUs:   %d / %d", online_cpus, total_cpus);
+        sprintf(buf, "\033[1;33mCPUs:\033[1;0m   %d / %d", online_cpus, total_cpus);
         strcpy(info_list[4], buf);
         // printk("info_list[4]: %s\n", info_list[4]);
     }
     if (kfetch_mask & KFETCH_MEM) {
         contain_info[5] = true;
-        sprintf(buf, "Mem:    %ld / %ld MB", free_memory, total_memory);
+        sprintf(buf, "\033[1;33mMem:\033[1;0m    %ld / %ld MB", free_memory, total_memory);
         strcpy(info_list[5], buf);
         // printk("info_list[5]: %s\n", info_list[5]);
     }
     if (kfetch_mask & KFETCH_NUM_PROCS) {
         contain_info[6] = true;
-        sprintf(buf, "Procs:  %d", num_procs);
+        sprintf(buf, "\033[1;33mProcs:\033[1;0m  %d", num_procs);
         strcpy(info_list[6], buf);
         // printk("info_list[6]: %s\n", info_list[6]);
     }
     if (kfetch_mask & KFETCH_UPTIME) {
         contain_info[7] = true;
-        sprintf(buf, "Uptime: %ld mins", uptime);
+        sprintf(buf, "\033[1;33mUptime:\033[1;0m %ld mins", uptime);
         strcpy(info_list[7], buf);
         // printk("info_list[7]: %s\n", info_list[7]);
     }
